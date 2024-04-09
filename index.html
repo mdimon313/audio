@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Message</title>
+</head>
+<body>
+  <button id="recordButton">Record</button>
+  <button id="stopButton" disabled>Stop</button>
+  <audio id="audioElement" controls></audio>
+
+  <script>
+    let stream;
+    let mediaRecorder;
+    let audioChunks = [];
+
+    const recordButton = document.getElementById('recordButton');
+    const stopButton = document.getElementById('stopButton');
+    const audioElement = document.getElementById('audioElement');
+
+    recordButton.addEventListener('click', startRecording);
+    stopButton.addEventListener('click', stopRecording);
+
+    async function startRecording() {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        audioElement.src = audioUrl;
+      };
+
+      mediaRecorder.start();
+      recordButton.disabled = true;
+      stopButton.disabled = false;
+    }
+
+    function stopRecording() {
+      mediaRecorder.stop();
+      stream.getTracks().forEach(track => track.stop());
+      recordButton.disabled = false;
+      stopButton.disabled = true;
+    }
+  </script>
+</body>
+</html>
